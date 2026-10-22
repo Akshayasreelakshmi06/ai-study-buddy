@@ -36,3 +36,8 @@ Never publish your API key or commit your `.env` file to GitHub.
 ## Author
 
 Created as a student project to explore AI-powered learning applications.
+
+## 🌐 Live Demo
+
+Try AI Study Buddy here:
+[Launch AI Study Buddy](https://ai-study-buddy-cdmb36rdakjxrufwsxzpvt.streamlit.app/)
