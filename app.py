@@ -6,6 +6,15 @@ from dotenv import load_dotenv
 from google import genai
 
 load_dotenv()
+API_KEY = os.getenv("GEMINI_API_KEY")
+
+if not API_KEY:
+    try:
+        API_KEY = st.secrets["GEMINI_API_KEY"]
+    except (KeyError, FileNotFoundError):
+        st.error("Gemini API key not found. Check your .env file or Streamlit Secrets.")
+        st.stop()
+client = genai.Client(api_key=API_KEY)
 
 # ---------- PAGE CONFIGURATION ----------
 st.set_page_config(
@@ -710,3 +719,63 @@ elif page == "📊 Study Progress":
         "Flashcards reviewed",
         st.session_state.flashcards_reviewed
     )
+    
+elif page == "💬 Chat with AI":
+    st.subheader("💬 Chat with your AI tutor")
+    st.write("Ask questions about any subject, concept, or topic.")
+
+    if "chat_messages" not in st.session_state:
+        st.session_state.chat_messages = []
+
+    # Display previous messages
+    for message in st.session_state.chat_messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    # Chat input
+    prompt = st.chat_input("Ask your AI tutor anything...")
+
+    if prompt:
+        st.session_state.chat_messages.append({
+            "role": "user",
+            "content": prompt
+        })
+
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
+        try:
+            # Include recent conversation for context
+            recent_messages = st.session_state.chat_messages[-11:-1]
+
+            conversation = "\n".join(
+                f'{msg["role"]}: {msg["content"]}'
+                for msg in recent_messages
+            )
+
+            full_prompt = f"""
+You are a friendly, knowledgeable AI study tutor.
+Explain concepts clearly and simply for a college student.
+Use examples and step-by-step explanations when helpful.
+
+Previous conversation:
+{conversation}
+
+Student's question:
+{prompt}
+"""
+
+            with st.chat_message("assistant"):
+                with st.spinner("Your AI tutor is thinking..."):
+                    answer = generate_text(full_prompt)
+                    st.markdown(answer)
+
+            st.session_state.chat_messages.append({
+                "role": "assistant",
+                "content": answer
+            })
+
+        except Exception as e:
+            st.error("I couldn't generate a reply. Please try again.")
+            st.caption(f"Technical details: {e}")
+
